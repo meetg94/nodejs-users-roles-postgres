@@ -3,14 +3,12 @@ const cors = require('cors');
 const { Client } = require('pg');
 require('dotenv').config();
 
-
+const RolesMiddleware = require('./middleware/RolesMiddleware');
+const CRUDControllers = require('./controllers/CRUDControllers');
 const registrationController = require('./controllers/registrationController');
 const validateRegistration = require('./middleware/validateRegisteration');
 const signInController = require('./controllers/signInController');
 const JWTAuth = require('./middleware/JWTAuth');
-const allItemsController = require('./controllers/allItemsController');
-const adminMiddleware = require('./middleware/adminMiddleware');
-const createItemsController = require('./controllers/createItemsController');
 const connString = process.env.CONN_STRING;
 
 const app = express();
@@ -40,10 +38,17 @@ app.post('/register', validateRegistration(client), registrationController(clien
 app.post('/signin', signInController(client).signInUser);
 
 //Get all electronics items list
-app.get('/all_items', JWTAuth, allItemsController(client).getAllItems);
+app.get('/all_items', JWTAuth, CRUDControllers.allItemsController(client).getAllItems);
 
 //Only admin can create new items middleware will check for admin role
-app.post('/create_item', JWTAuth, adminMiddleware, createItemsController(client).createItem);
+app.post('/create_item', JWTAuth, RolesMiddleware.verifyAdmin, CRUDControllers.createItemsController(client).createItem);
+
+//Only mod or admin can update the item info
+app.put('/update/item/:id', JWTAuth, RolesMiddleware.verifyAdminOrMod, CRUDControllers.updateItemController(client).updateItem);
+
+//Only admin can delete the items
+app.delete('/delete/item/:id', JWTAuth, RolesMiddleware.verifyAdmin, CRUDControllers.deleteItemController(client).deleteItem)
+
 const PORT = 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
