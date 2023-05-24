@@ -8,7 +8,7 @@ allItemsController = (client) => {
             }
 
             const items = results.rows;
-            res.json({ items });
+            res.status(200).json({ items });
         });
     };
     return { getAllItems };
@@ -45,27 +45,28 @@ updateItemController = (client) => {
         'SELECT * FROM electronics_items WHERE item_id = $1',
         [itemId],
         (err, result) => {
-        if (err) {
-            console.error('Error updating item:', err);
-            return res.status(500).json({ message: 'Internal Server Error' });
-        }
+            if (err) {
+                console.error('Error updating item:', err);
+                return res.status(500).json({ message: 'Internal Server Error' });
+            }
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Item not found' });
-        }
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'Item not found' });
+            }
+        });
 
           // Update the item
         client.query(
             'UPDATE electronics_items SET item_name = $1, item_quantity = $2 WHERE item_id = $3',
             [item_name, item_quantity, itemId],
             (err) => {
-            if (err) {
-                console.error('Error updating item:', err);
-                return res.status(500).json({ message: 'Internal Server Error' });
+                if (err) {
+                    console.error('Error updating item:', err);
+                    return res.status(500).json({ message: 'Internal Server Error' });
+                }
+                res.status(200).json({ message: 'Item updated!' });
             }
-                res.json({ message: 'Item updated!' });
-            });
-        });
+        );
     };
     return { updateItem };
 };
@@ -87,7 +88,7 @@ deleteItemController = (client) =>{
                     return res.status(404).json({ message: 'Item not found' });
                 }
 
-                res.json({ message: 'Item deleted!'});
+                res.status(200).json({ message: 'Item deleted!'});
             }
         );
     };
